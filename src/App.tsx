@@ -2,8 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import * as tf from "@tensorflow/tfjs";
 import "./App.css";
 
-// const STATUS = document.getElementById("status");
-// const VIDEO = document.getElementById("webcam");
 const MOBILE_NET_INPUT_WIDTH = 224;
 const MOBILE_NET_INPUT_HEIGHT = 224;
 const STOP_DATA_GATHER = -1;
@@ -11,7 +9,6 @@ const CLASS_NAMES = ["Class 1", "Class 2"];
 
 let mobilenet: tf.GraphModel<string | tf.io.IOHandler> | undefined = undefined;
 let gatherDataState = STOP_DATA_GATHER;
-// let videoPlaying = false;
 let trainingDataInputs: tf.Tensor<tf.Rank>[] = [];
 let trainingDataOutputs: number[] = [];
 let examplesCount: number[] = [];
@@ -45,6 +42,10 @@ const getModel = () => {
   return model;
 };
 
+/** This demo records images using the user's webcam and uses them to train a model to classify two different types of images, which it then uses to recognize those same classes once training is complete
+ *
+ * Note: This demo is largely based on the tensorflow.js tutorial: https://www.tensorflow.org/js/tutorials/transfer/image_classification
+ */
 function App() {
   const video = useRef<HTMLVideoElement>(null);
 
@@ -63,7 +64,6 @@ function App() {
 
     mobilenet = await tf.loadGraphModel(URL, { fromTFHub: true });
     setStatus("MobileNet v3 loaded successfully!");
-    // console.log(mobilenet);
 
     // Warm up the model by passing zeros through it once.
     tf.tidy(function () {
@@ -71,7 +71,6 @@ function App() {
         tf.zeros([1, MOBILE_NET_INPUT_HEIGHT, MOBILE_NET_INPUT_WIDTH, 3])
       );
       console.log((answer as tf.Tensor)?.shape);
-      // console.log((answer as tf.Tensor)?.dataSync());
     });
   }
 
@@ -195,7 +194,7 @@ function App() {
     let oneHotOutputs = tf.oneHot(outputsAsTensor, CLASS_NAMES.length);
     let inputsAsTensor = tf.stack(trainingDataInputs);
 
-    let results = await model?.fit(inputsAsTensor, oneHotOutputs, {
+    await model?.fit(inputsAsTensor, oneHotOutputs, {
       shuffle: true,
       batchSize: 5,
       epochs: 10,
